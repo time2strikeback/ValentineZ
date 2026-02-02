@@ -257,6 +257,13 @@ function maybeDodge(clientX, clientY) {
 zone.addEventListener("pointermove", (e) => maybeDodge(e.clientX, e.clientY), { passive: true });
 noBtn.addEventListener("pointermove", (e) => requestDodge(e.clientX, e.clientY), { passive: true });
 
+// Mobile: there is usually no hover, so also dodge on touch taps near the No button.
+// Important: don't dodge when the user taps directly on the No button, so it can still be clicked.
+zone.addEventListener("pointerdown", (e) => {
+  if (e.pointerType !== "touch") return;
+  maybeDodge(e.clientX, e.clientY);
+});
+
 /* ---------- YES CLICK ---------- */
 yesBtn.addEventListener("click", () => {
   setIntroVisible(false);
@@ -268,12 +275,18 @@ yesBtn.addEventListener("click", () => {
   fullScreenConfetti();
 });
 
-noBtn.addEventListener("click", () => {
-  setIntroVisible(false);
-  zone.style.display = "none";
-  hint.style.display = "none";
-  if (result) result.style.display = "none";
-  if (noResult) noResult.style.display = "block";
+// Make "No" impossible to click: any attempt dodges.
+noBtn.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  requestDodge(e.clientX, e.clientY);
+});
+
+noBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  const b = noBtn.getBoundingClientRect();
+  requestDodge(b.left + b.width / 2, b.top + b.height / 2);
 });
 
 function updateFullscreenBtn() {
